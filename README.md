@@ -5,14 +5,23 @@ provide native support for gocql on Astra.
 
 This library was made possible by the `gocql.HostDialer` interface added here: https://github.com/gocql/gocql/pull/1629
 
+Note: Only works with a version of `gocql` with this [fix](https://github.com/gocql/gocql/commit/dc449c49ae76d903ee369128ccb296656643ab51).
+
+Use this command to pull the correct version until the next release of `gocql`:
+
+```
+go get github.com/gocql/gocql@ce100a15a6899a7f42fbdc588874a36afcadc921
+```
+
 ## Issues
 
 * Astra uses Stargate which doesn't current support the system table `system.peers_v2`. Also, the underlying storage 
   system for Astra is returns `4.0.0.6816` for the `release_version` column, but it doesn't actually support Apache
-  Cassandra 4.0 (which includes `system.peers_v2`).  This is currently using a hack that replaces the `HostInfo` 
-  version using a custom `gocql.HostFilter`. See [hack.go](hack.go) for more information.
-  * Created a `gocql` PR to fix this issue: https://github.com/gocql/gocql/pull/1646
+  Cassandra 4.0 (which includes `system.peers_v2`). To work correctly it currently requires at least a version of 
+  `gocql` with the following [fix](https://github.com/gocql/gocql/commit/dc449c49ae76d903ee369128ccb296656643ab51):
+  * Here's the `gocql` PR to fix the issue: https://github.com/gocql/gocql/pull/1646
 * Need to verify that topology/status events correctly update the driver when using Astra.
+  * This seems to work correctly and was tested by removing Astra coordinators
 * There is a bit of weirdness around contact points. I'm just using a place holder `"0.0.0.0"` (some valid IP address) 
   then the `HostDialer` provides a host ID from the metadata service when the host ID in the `HostInfo` is empty.
 
