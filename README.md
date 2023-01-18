@@ -3,23 +3,12 @@
 This provides a custom `gocql.HostDialer` that can be used to allow gocql to connect to DataStax Astra. The goal is to
 provide native support for gocql on Astra.
 
-This library was made possible by the `gocql.HostDialer` interface added here: https://github.com/gocql/gocql/pull/1629
-
-Note: Only works with a version of `gocql` with this [fix](https://github.com/gocql/gocql/commit/dc449c49ae76d903ee369128ccb296656643ab51).
-
-Use this command to pull the correct version until the next release of `gocql`:
-
-```
-go get github.com/gocql/gocql@ce100a15a6899a7f42fbdc588874a36afcadc921
-```
+This library was made possible by the `gocql.HostDialer` interface added [here](https://github.com/gocql/gocql/pull/1629)
+and released with version [1.2.1](https://github.com/gocql/gocql/releases/tag/v1.2.1).  As a result you _must_ use
+version 1.2.1 or greater of gocql with gocql-astra.
 
 ## Issues
 
-* Astra uses Stargate which doesn't current support the system table `system.peers_v2`. Also, the underlying storage 
-  system for Astra is returns `4.0.0.6816` for the `release_version` column, but it doesn't actually support Apache
-  Cassandra 4.0 (which includes `system.peers_v2`). To work correctly it currently requires at least a version of 
-  `gocql` with the following [fix](https://github.com/gocql/gocql/commit/dc449c49ae76d903ee369128ccb296656643ab51):
-  * Here's the `gocql` PR to fix the issue: https://github.com/gocql/gocql/pull/1646
 * Need to verify that topology/status events correctly update the driver when using Astra.
   * This seems to work correctly and was tested by removing Astra coordinators
 * There is a bit of weirdness around contact points. I'm just using a place holder `"0.0.0.0"` (some valid IP address) 
