@@ -3,9 +3,13 @@
 This provides a custom `gocql.HostDialer` that can be used to allow gocql to connect to DataStax Astra. The goal is to
 provide native support for gocql on Astra.
 
-This library was made possible by the `gocql.HostDialer` interface added [here](https://github.com/gocql/gocql/pull/1629)
-and released with version [1.2.1](https://github.com/gocql/gocql/releases/tag/v1.2.1).  As a result you _must_ use
-version 1.2.1 or greater of gocql with gocql-astra.
+This library relies on the following features of gocql:
+
+* The ability to customize connection features via the [HostDialer interface](https://github.com/gocql/gocql/pull/1629)
+* [Querying system.peers](https://github.com/gocql/gocql/pull/1646) if system.peers_v2 should be used but isn't available 
+
+You must use a version of gocql which supports both of these features.  Both features have been merged into master as of
+version [1.2.1](https://github.com/gocql/gocql/releases/tag/v1.2.1) so any release >= 1.2.1 should work.
 
 ## Issues
 
