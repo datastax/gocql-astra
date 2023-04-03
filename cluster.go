@@ -11,7 +11,7 @@ func NewClusterFromBundle(path, username, password string, timeout time.Duration
 	if err != nil {
 		return nil, err
 	}
-	return newCluster(dialer, username, password), nil
+	return NewCluster(dialer, username, password), nil
 }
 
 func NewClusterFromURL(url, databaseID, token string, timeout time.Duration) (*gocql.ClusterConfig, error) {
@@ -19,10 +19,10 @@ func NewClusterFromURL(url, databaseID, token string, timeout time.Duration) (*g
 	if err != nil {
 		return nil, err
 	}
-	return newCluster(dialer, "token", token), nil
+	return NewCluster(dialer, "token", token), nil
 }
 
-func newCluster(dialer gocql.HostDialer, username, password string) *gocql.ClusterConfig {
+func NewCluster(dialer gocql.HostDialer, username, password string) *gocql.ClusterConfig {
 	cluster := gocql.NewCluster("0.0.0.0") // Placeholder, maybe figure how to make this better
 	cluster.HostDialer = dialer
 	cluster.PoolConfig = gocql.PoolConfig{HostSelectionPolicy: gocql.RoundRobinHostPolicy()}
