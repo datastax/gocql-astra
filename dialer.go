@@ -54,6 +54,13 @@ func NewDialerFromURL(url, databaseID, token string, timeout time.Duration) (goc
 	}, nil
 }
 
+func NewDialer(b *astra.Bundle, timeout time.Duration) (gocql.HostDialer, error) {
+	return &dialer{
+		bundle:  b,
+		timeout: timeout,
+	}, nil
+}
+
 func (d *dialer) DialHost(ctx context.Context, host *gocql.HostInfo) (*gocql.DialedHost, error) {
 	sniAddr, contactPoints, err := d.resolveMetadata(ctx)
 	if err != nil {
