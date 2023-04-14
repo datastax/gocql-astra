@@ -3,7 +3,7 @@ module github.com/datastax/gocql-astra
 go 1.18
 
 require (
-	github.com/alecthomas/kong v0.6.1 // indirect
+	github.com/alecthomas/kong v0.7.2-0.20230131193930-9610ed62d939 // indirect
 	github.com/datastax/astra-client-go/v2 v2.2.9 // indirect
 	github.com/datastax/cql-proxy v0.1.3 // indirect
 	github.com/datastax/go-cassandra-native-protocol v0.0.0-20211124104234-f6aea54fa801 // indirect
