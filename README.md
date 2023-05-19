@@ -50,7 +50,7 @@ session, err := gocql.NewSession(*cluster)
 // ...
 ```
 
-Also, look at the [example](example) for more information.
+Also, look at the [example](examples) for more information.
 
 ### Running the example:
 
