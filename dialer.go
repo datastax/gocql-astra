@@ -110,11 +110,11 @@ func (d *dialer) resolveMetadata(ctx context.Context) (string, []string, error) 
 
 	httpsClient := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: d.bundle.TLSConfig().Clone(),
+			TLSClientConfig: d.bundle.TLSConfig.Clone(),
 		},
 	}
 
-	url := fmt.Sprintf("https://%s:%d/metadata", d.bundle.Host(), d.bundle.Port())
+	url := fmt.Sprintf("https://%s:%d/metadata", d.bundle.Host, d.bundle.Port)
 	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
 	if err != nil {
 		return "", nil, err
@@ -142,7 +142,7 @@ func (d *dialer) resolveMetadata(ctx context.Context) (string, []string, error) 
 }
 
 func copyTLSConfig(bundle *astra.Bundle, serverName string) *tls.Config {
-	tlsConfig := bundle.TLSConfig().Clone()
+	tlsConfig := bundle.TLSConfig.Clone()
 	tlsConfig.ServerName = serverName
 	tlsConfig.InsecureSkipVerify = true
 	tlsConfig.VerifyPeerCertificate = func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
@@ -158,7 +158,7 @@ func copyTLSConfig(bundle *astra.Bundle, serverName string) *tls.Config {
 		opts := x509.VerifyOptions{
 			Roots:         tlsConfig.RootCAs,
 			CurrentTime:   time.Now(),
-			DNSName:       bundle.Host(),
+			DNSName:       bundle.Host,
 			Intermediates: x509.NewCertPool(),
 		}
 		for _, cert := range certs[1:] {
