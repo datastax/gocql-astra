@@ -37,7 +37,7 @@ func NewClusterFromURL(url, databaseID, token string, timeout time.Duration) (*g
 }
 
 func NewCluster(dialer gocql.HostDialer, username, password string) *gocql.ClusterConfig {
-	cluster := gocql.NewCluster("0.0.0.0") // Placeholder, maybe figure how to make this better
+	cluster := gocql.NewCluster("0.0.0.1") // Placeholder, maybe figure how to make this better
 	cluster.HostDialer = dialer
 	cluster.PoolConfig = gocql.PoolConfig{HostSelectionPolicy: gocql.RoundRobinHostPolicy()}
 	cluster.Authenticator = &gocql.PasswordAuthenticator{

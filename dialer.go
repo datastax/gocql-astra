@@ -88,7 +88,7 @@ func (d *dialer) DialHost(ctx context.Context, host *gocql.HostInfo) (*gocql.Dia
 
 	conn, err := d.dialer.DialContext(ctx, "tcp", addr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error connecting to Astra ingress %v: %w", addr, err)
 	}
 
 	hostId := host.HostID()
@@ -99,7 +99,7 @@ func (d *dialer) DialHost(ctx context.Context, host *gocql.HostInfo) (*gocql.Dia
 	tlsConn := tls.Client(conn, copyTLSConfig(d.bundle, hostId))
 	if err = tlsConn.HandshakeContext(ctx); err != nil {
 		_ = conn.Close()
-		return nil, err
+		return nil, fmt.Errorf("error connecting to Astra node %v through ingress %v: %w", hostId, addr, err)
 	}
 
 	return &gocql.DialedHost{
@@ -141,18 +141,18 @@ func (d *dialer) resolveMetadata(ctx context.Context) (string, []string, error) 
 
 	body, err := readAllWithTimeout(response.Body, ctx)
 	if err != nil {
-		return "", nil, err
+		return "", nil, fmt.Errorf("unable to read Astra metadata response body from %s: %w, http code: %v", url, err, response.StatusCode)
 	}
 
 	err = json.Unmarshal(body, &metadata)
 	if err != nil {
-		return "", nil, err
+		return "", nil, fmt.Errorf("unable to decode Astra metadata response body from %s: %w, received body: %v, http code: %v", url, err, string(body), response.StatusCode)
 	}
 
 	d.sniProxyAddr = metadata.ContactInfo.SniProxyAddress
 	d.contactPoints = metadata.ContactInfo.ContactPoints
 
-	return d.sniProxyAddr, d.contactPoints, err
+	return d.sniProxyAddr, d.contactPoints, nil
 }
 
 func copyTLSConfig(bundle *astra.Bundle, serverName string) *tls.Config {
