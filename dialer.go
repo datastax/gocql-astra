@@ -149,6 +149,10 @@ func (d *dialer) resolveMetadata(ctx context.Context) (string, []string, error) 
 		return "", nil, fmt.Errorf("unable to decode Astra metadata response body from %s: %w, received body: %v, http code: %v", url, err, string(body), response.StatusCode)
 	}
 
+	if metadata.ContactInfo.SniProxyAddress == "" || len(metadata.ContactInfo.ContactPoints) == 0 {
+		return "", nil, fmt.Errorf("unable to decode Astra metadata response body from %s: %w, received body: %v, http code: %v", url, err, string(body), response.StatusCode)
+	}
+
 	d.sniProxyAddr = metadata.ContactInfo.SniProxyAddress
 	d.contactPoints = metadata.ContactInfo.ContactPoints
 
