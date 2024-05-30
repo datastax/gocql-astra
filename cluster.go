@@ -20,6 +20,8 @@ import (
 	"github.com/gocql/gocql"
 )
 
+const astraAuthenticator = "org.apache.cassandra.auth.AstraAuthenticator"
+
 func NewClusterFromBundle(path, username, password string, timeout time.Duration) (*gocql.ClusterConfig, error) {
 	dialer, err := NewDialerFromBundle(path, timeout)
 	if err != nil {
@@ -43,6 +45,7 @@ func NewCluster(dialer gocql.HostDialer, username, password string) *gocql.Clust
 	cluster.Authenticator = &gocql.PasswordAuthenticator{
 		Username: username,
 		Password: password,
+		AllowedAuthenticators: []string{astraAuthenticator},
 	}
 	return cluster
 }
