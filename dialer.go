@@ -23,9 +23,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"net"
 	"net/http"
+	"sort"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -44,16 +47,18 @@ type dialer struct {
 	dialer            net.Dialer
 	mu                sync.Mutex
 	timeout           time.Duration
+	coordinatorIdx    int
 }
 
-func NewDialerFromBundle(path string, timeout time.Duration) (gocql.HostDialer, error) {
+func NewDialerFromBundle(path string, timeout time.Duration, coordinatorIdx int) (gocql.HostDialer, error) {
 	bundle, err := astra.LoadBundleZipFromPath(path)
 	if err != nil {
 		return nil, err
 	}
 	return &dialer{
-		bundle:  bundle,
-		timeout: timeout,
+		bundle:         bundle,
+		timeout:        timeout,
+		coordinatorIdx: coordinatorIdx,
 	}, nil
 }
 
@@ -93,7 +98,7 @@ func (d *dialer) DialHost(ctx context.Context, host *gocql.HostInfo) (*gocql.Dia
 
 	hostId := host.HostID()
 	if hostId == "" {
-		hostId = contactPoints[int(atomic.AddInt32(&d.contactPointIndex, 1))%len(d.contactPoints)]
+		hostId = contactPoints[int(atomic.AddInt32(&d.contactPointIndex, 1)-1)%len(d.contactPoints)]
 	}
 
 	tlsConn := tls.Client(conn, copyTLSConfig(d.bundle, hostId))
@@ -154,6 +159,17 @@ func (d *dialer) resolveMetadata(ctx context.Context) (string, []string, error) 
 	}
 
 	d.sniProxyAddr = metadata.ContactInfo.SniProxyAddress
+	log.Printf("gocql-astra: contact points from metadata endpoint -> %s", strings.Join(metadata.ContactInfo.ContactPoints, ","))
+	if len(metadata.ContactInfo.ContactPoints) > 1 {
+		log.Printf("gocql-astra: sorting contact points and setting index %v as the second contact point in the list (first is used by gocql for protocol version discovery only)", d.coordinatorIdx)
+		sort.Strings(metadata.ContactInfo.ContactPoints)
+		log.Printf("gocql-astra: sorted contact points from metadata endpoint -> %s", strings.Join(metadata.ContactInfo.ContactPoints, ","))
+		tempIdx := d.coordinatorIdx % len(metadata.ContactInfo.ContactPoints)
+		temp := metadata.ContactInfo.ContactPoints[tempIdx]
+		metadata.ContactInfo.ContactPoints[tempIdx] = metadata.ContactInfo.ContactPoints[1]
+		metadata.ContactInfo.ContactPoints[1] = temp
+		log.Printf("gocql-astra: final contact points: %v", strings.Join(metadata.ContactInfo.ContactPoints, ","))
+	}
 	d.contactPoints = metadata.ContactInfo.ContactPoints
 
 	return d.sniProxyAddr, d.contactPoints, nil

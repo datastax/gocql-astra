@@ -20,13 +20,12 @@ import (
 	"github.com/gocql/gocql"
 )
 
-
 const apacheAuthenticator = "org.apache.cassandra.auth.PasswordAuthenticator"
 const dseAuthenticator = "com.datastax.bdp.cassandra.auth.DseAuthenticator"
 const astraAuthenticator = "org.apache.cassandra.auth.AstraAuthenticator"
 
-func NewClusterFromBundle(path, username, password string, timeout time.Duration) (*gocql.ClusterConfig, error) {
-	dialer, err := NewDialerFromBundle(path, timeout)
+func NewClusterFromBundle(path, username, password string, timeout time.Duration, coordinatorIdx int) (*gocql.ClusterConfig, error) {
+	dialer, err := NewDialerFromBundle(path, timeout, coordinatorIdx)
 	if err != nil {
 		return nil, err
 	}
@@ -46,8 +45,8 @@ func NewCluster(dialer gocql.HostDialer, username, password string) *gocql.Clust
 	cluster.HostDialer = dialer
 	cluster.PoolConfig = gocql.PoolConfig{HostSelectionPolicy: gocql.RoundRobinHostPolicy()}
 	cluster.Authenticator = &gocql.PasswordAuthenticator{
-		Username: username,
-		Password: password,
+		Username:              username,
+		Password:              password,
 		AllowedAuthenticators: []string{apacheAuthenticator, dseAuthenticator, astraAuthenticator},
 	}
 	return cluster
