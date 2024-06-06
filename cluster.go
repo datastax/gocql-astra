@@ -39,9 +39,9 @@ func NewClusterFromURL(url, databaseID, token string, timeout time.Duration) (*g
 
 func NewCluster(dialer gocql.HostDialer, username, password string) *gocql.ClusterConfig {
 	// add multiple fake contact points to make gocql call the dialer multiple times (since the dialer will cycle through the contact points
-	cluster := gocql.NewCluster("127.0.0.1", "127.0.0.2", "127.0.0.3") // Placeholder, maybe figure how to make this better
+	cluster := gocql.NewCluster("0.0.0.1", "0.0.0.2", "0.0.0.3") // Placeholder, maybe figure how to make this better
 	cluster.HostDialer = dialer
-	
+
 	// this will make gocql ignore the contact point address for the control host initially and use the system.local address right away
 	// while also preventing a panic in `ConnectAddress()` if the control connection fails to initialize
 	cluster.AddressTranslator = gocql.AddressTranslatorFunc(func(addr net.IP, port int) (net.IP, int) {
