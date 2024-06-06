@@ -53,6 +53,5 @@ func NewCluster(dialer gocql.HostDialer, username, password string) *gocql.Clust
 		Username: username,
 		Password: password,
 	}
-	cluster.ReconnectInterval = 15 * time.Second
 	return cluster
 }
