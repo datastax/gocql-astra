@@ -45,29 +45,23 @@ type dialer struct {
 	timeout           time.Duration
 }
 
-func NewDialerFromBundle(path string, timeout time.Duration) (gocql.HostDialer, error) {
+func NewDialerFromBundle(path string, timeout time.Duration) (*dialer, error) {
 	bundle, err := astra.LoadBundleZipFromPath(path)
 	if err != nil {
 		return nil, err
 	}
-	return &dialer{
-		bundle:  bundle,
-		timeout: timeout,
-	}, nil
+	return NewDialer(bundle, timeout)
 }
 
-func NewDialerFromURL(url, databaseID, token string, timeout time.Duration) (gocql.HostDialer, error) {
+func NewDialerFromURL(url, databaseID, token string, timeout time.Duration) (*dialer, error) {
 	bundle, err := astra.LoadBundleZipFromURL(url, databaseID, token, timeout)
 	if err != nil {
 		return nil, err
 	}
-	return &dialer{
-		bundle:  bundle,
-		timeout: timeout,
-	}, nil
+	return NewDialer(bundle, timeout)
 }
 
-func NewDialer(b *astra.Bundle, timeout time.Duration) (gocql.HostDialer, error) {
+func NewDialer(b *astra.Bundle, timeout time.Duration) (*dialer, error) {
 	return &dialer{
 		bundle:  b,
 		timeout: timeout,

@@ -42,17 +42,16 @@ func NewClusterFromURL(url, databaseID, token string, timeout time.Duration) (*g
 	return NewCluster(dialer, "token", token), nil
 }
 
-func NewCluster(hostDialer gocql.HostDialer, username, password string) *gocql.ClusterConfig {
+func NewCluster(astraDialer *dialer, username, password string) *gocql.ClusterConfig {
 	// Do an initial resolution of Astra metadata and use the results to setup an
 	// initial contact point for the cluster
-	dialer := hostDialer.(*dialer)
 	ctx := context.Background()
-	sniProxyAddr, _, err := dialer.resolveMetadata(ctx)
+	sniProxyAddr, _, err := astraDialer.resolveMetadata(ctx)
 	if err != nil {
 		log.Fatal("Error resolving metdata", err)
 	}
 	cluster := gocql.NewCluster(sniProxyAddr)
-	cluster.HostDialer = hostDialer
+	cluster.HostDialer = astraDialer
 	cluster.PoolConfig = gocql.PoolConfig{HostSelectionPolicy: gocql.RoundRobinHostPolicy()}
 	cluster.Authenticator = &gocql.PasswordAuthenticator{
 		Username:              username,
