@@ -2,6 +2,7 @@ name: Astra DB Integration Tests
 
 on:
   workflow_dispatch:
+  push:
 
 jobs:
   test:
