@@ -1,0 +1,70 @@
+name: Astra DB Integration Tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      ASTRA_DB_KEYSPACE: test_keyspace
+      ASTRA_DB_NAME: gocql_astra_ci
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install Astra CLI
+        run: |
+          curl -Ls https://dtsx.io/get-astra-cli | bash
+          echo "$HOME/.astra/cli" >> $GITHUB_PATH
+
+      - name: Create Astra DB
+        run: |
+          astra db create "$ASTRA_DB_NAME" \
+            --env test \
+            --token ${{ secrets.ASTRA_DB_APPLICATION_TOKEN }} \
+            --cloud AWS \
+            --region us-east-2 \
+            --keyspace "$ASTRA_DB_KEYSPACE" \
+            --if-not-exists \
+            --wait
+
+      - name: Download Secure Connect Bundle
+        run: |
+          astra db download-scb "$ASTRA_DB_NAME" \
+            --env test \
+            --token ${{ secrets.ASTRA_DB_APPLICATION_TOKEN }} \
+            -f secure-connect.zip
+
+          echo "ASTRA_SECURE_BUNDLE_PATH=$PWD/secure-connect.zip" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run tests
+        env:
+          ASTRA_SECURE_BUNDLE_PATH: ${{ env.ASTRA_SECURE_BUNDLE_PATH }}
+        run: |
+          go test ./... -v \
+            -token="${{ secrets.ASTRA_DB_APPLICATION_TOKEN }}" \
+            -bundle="${ASTRA_SECURE_BUNDLE_PATH}" \
+            -username="${{ secrets.ASTRA_DB_CLIENT_ID }}" \
+            -password="${{ secrets.ASTRA_DB_CLIENT_SECRET }}" \
+            -db_name="$ASTRA_DB_NAME" \
+            -api_url="https://api.test.cloud.datastax.com"
+
+      - name: Delete Astra DB (always, fail on error)
+        if: always()
+        run: |
+          echo "Deleting Astra DB: $ASTRA_DB_NAME"
+          astra db delete "$ASTRA_DB_NAME" --force \
+            --env test \
+            --token ${{ secrets.ASTRA_DB_APPLICATION_TOKEN }}

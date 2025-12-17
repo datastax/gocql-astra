@@ -29,7 +29,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	gocql "github.com/apache/cassandra-gocql-driver/v2"
+	"github.com/apache/cassandra-gocql-driver/v2"
 	"github.com/datastax/cql-proxy/astra"
 )
 

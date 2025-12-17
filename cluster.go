@@ -15,15 +15,10 @@
 package gocqlastra
 
 import (
-	"net"
 	"time"
 
-	gocql "github.com/apache/cassandra-gocql-driver/v2"
+	"github.com/apache/cassandra-gocql-driver/v2"
 )
-
-const apacheAuthenticator = "org.apache.cassandra.auth.PasswordAuthenticator"
-const dseAuthenticator = "com.datastax.bdp.cassandra.auth.DseAuthenticator"
-const astraAuthenticator = "org.apache.cassandra.auth.AstraAuthenticator"
 
 func NewClusterFromBundle(path, username, password string, timeout time.Duration) (*gocql.ClusterConfig, error) {
 	dialer, err := NewDialerFromBundle(path, timeout)
@@ -46,17 +41,10 @@ func NewCluster(dialer gocql.HostDialer, username, password string) *gocql.Clust
 	cluster := gocql.NewCluster("0.0.0.1", "0.0.0.2", "0.0.0.3") // Placeholder, maybe figure how to make this better
 	cluster.HostDialer = dialer
 
-	// this will make gocql ignore the contact point address for the control host initially and use the system.local address right away
-	// while also preventing a panic in `ConnectAddress()` if the control connection fails to initialize
-	cluster.AddressTranslator = gocql.AddressTranslatorFunc(func(addr net.IP, port int) (net.IP, int) {
-		return net.IPv4zero, port
-	})
-
 	cluster.PoolConfig = gocql.PoolConfig{HostSelectionPolicy: gocql.RoundRobinHostPolicy()}
 	cluster.Authenticator = &gocql.PasswordAuthenticator{
-		Username:              username,
-		Password:              password,
-		AllowedAuthenticators: []string{apacheAuthenticator, dseAuthenticator, astraAuthenticator},
+		Username: username,
+		Password: password,
 	}
 	cluster.ReconnectInterval = 30 * time.Second
 	return cluster
