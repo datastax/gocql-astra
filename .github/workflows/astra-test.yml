@@ -36,7 +36,6 @@ jobs:
             --region us-east-2 \
             --keyspace "$ASTRA_DB_KEYSPACE" \
             --if-not-exists \
-            --wait \
             --no-input
 
       - name: Download Secure Connect Bundle
