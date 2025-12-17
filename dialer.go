@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"net"
 	"net/http"
@@ -30,8 +29,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	gocql "github.com/apache/cassandra-gocql-driver/v2"
 	"github.com/datastax/cql-proxy/astra"
-	"github.com/gocql/gocql"
 )
 
 const AstraAPIURL = "https://api.astra.datastax.com"
@@ -193,7 +192,7 @@ func readAllWithTimeout(r io.Reader, ctx context.Context) (bytes []byte, err err
 	ch := make(chan struct{})
 
 	go func() {
-		bytes, err = ioutil.ReadAll(r)
+		bytes, err = io.ReadAll(r)
 		close(ch)
 	}()
 

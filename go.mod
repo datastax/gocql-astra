@@ -1,10 +1,10 @@
 module github.com/datastax/gocql-astra
 
-go 1.18
+go 1.23
 
 require (
+	github.com/apache/cassandra-gocql-driver/v2 v2.0.0
 	github.com/datastax/cql-proxy v0.1.6
-	github.com/gocql/gocql v1.6.0
 )
 
 require (
@@ -14,9 +14,8 @@ require (
 	github.com/deepmap/oapi-codegen v1.12.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
-	go.uber.org/atomic v1.8.0 // indirect
-	go.uber.org/multierr v1.7.0 // indirect
-	go.uber.org/zap v1.17.0 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/zap v1.27.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 )

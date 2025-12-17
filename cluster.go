@@ -18,9 +18,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/gocql/gocql"
+	gocql "github.com/apache/cassandra-gocql-driver/v2"
 )
-
 
 const apacheAuthenticator = "org.apache.cassandra.auth.PasswordAuthenticator"
 const dseAuthenticator = "com.datastax.bdp.cassandra.auth.DseAuthenticator"
@@ -55,8 +54,8 @@ func NewCluster(dialer gocql.HostDialer, username, password string) *gocql.Clust
 
 	cluster.PoolConfig = gocql.PoolConfig{HostSelectionPolicy: gocql.RoundRobinHostPolicy()}
 	cluster.Authenticator = &gocql.PasswordAuthenticator{
-		Username: username,
-		Password: password,
+		Username:              username,
+		Password:              password,
 		AllowedAuthenticators: []string{apacheAuthenticator, dseAuthenticator, astraAuthenticator},
 	}
 	cluster.ReconnectInterval = 30 * time.Second
