@@ -35,14 +35,16 @@ jobs:
             --region us-east-2 \
             --keyspace "$ASTRA_DB_KEYSPACE" \
             --if-not-exists \
-            --wait
+            --wait \
+            --no-input
 
       - name: Download Secure Connect Bundle
         run: |
           astra db download-scb "$ASTRA_DB_NAME" \
             --env test \
             --token ${{ secrets.ASTRA_DB_APPLICATION_TOKEN }} \
-            -f secure-connect.zip
+            -f secure-connect.zip \
+            --no-input
 
           echo "ASTRA_SECURE_BUNDLE_PATH=$PWD/secure-connect.zip" >> $GITHUB_ENV
 
@@ -67,4 +69,5 @@ jobs:
           echo "Deleting Astra DB: $ASTRA_DB_NAME"
           astra db delete "$ASTRA_DB_NAME" --force \
             --env test \
-            --token ${{ secrets.ASTRA_DB_APPLICATION_TOKEN }}
+            --token ${{ secrets.ASTRA_DB_APPLICATION_TOKEN }} \
+            --no-input
