@@ -9,6 +9,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
+    strategy:
+      matrix:
+        db:
+          - name: gocql_astra_ci
+            non_vector: true
+          - name: gocql_vector_ci
+            non_vector: false
+            
     env:
       ASTRA_DB_KEYSPACE: test_keyspace
       ASTRA_DB_NAME: gocql_astra_ci
@@ -29,18 +37,18 @@ jobs:
 
       - name: Create Astra DB
         run: |
-          astra db create "$ASTRA_DB_NAME" \
+          astra db create "${{ matrix.db.name }}" \
             --env test \
             --token ${{ secrets.ASTRA_DB_APPLICATION_TOKEN }} \
             --cloud AWS \
             --region us-east-1 \
             --keyspace "$ASTRA_DB_KEYSPACE" \
             --if-not-exists \
-            --no-input
+            --no-input $( [ "${{ matrix.db.non_vector }}" = "true" ] && echo "--non-vector" )
 
       - name: Download Secure Connect Bundle
         run: |
-          astra db download-scb "$ASTRA_DB_NAME" \
+          astra db download-scb "${{ matrix.db.name }}" \
             --env test \
             --token ${{ secrets.ASTRA_DB_APPLICATION_TOKEN }} \
             -f secure-connect.zip \
@@ -60,14 +68,14 @@ jobs:
             -bundle="${ASTRA_SECURE_BUNDLE_PATH}" \
             -username="${{ secrets.ASTRA_DB_CLIENT_ID }}" \
             -password="${{ secrets.ASTRA_DB_CLIENT_SECRET }}" \
-            -db_name="$ASTRA_DB_NAME" \
+            -db_name="${{ matrix.db.name }}" \
             -api_url="https://api.test.cloud.datastax.com"
 
       - name: Delete Astra DB (always, fail on error)
         if: always()
         run: |
           echo "Deleting Astra DB: $ASTRA_DB_NAME"
-          astra db delete "$ASTRA_DB_NAME" --force \
+          astra db delete "${{ matrix.db.name }}" --yes \
             --env test \
             --token ${{ secrets.ASTRA_DB_APPLICATION_TOKEN }} \
             --no-input
