@@ -15,7 +15,8 @@
 package gocqlastra
 
 import (
-	"net"
+	"context"
+	"log"
 	"time"
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
@@ -41,17 +42,17 @@ func NewClusterFromURL(url, databaseID, token string, timeout time.Duration) (*g
 	return NewCluster(dialer, "token", token), nil
 }
 
-func NewCluster(dialer gocql.HostDialer, username, password string) *gocql.ClusterConfig {
-	// add multiple fake contact points to make gocql call the dialer multiple times (since the dialer will cycle through the contact points
-	cluster := gocql.NewCluster("0.0.0.1", "0.0.0.2", "0.0.0.3") // Placeholder, maybe figure how to make this better
-	cluster.HostDialer = dialer
-
-	// this will make gocql ignore the contact point address for the control host initially and use the system.local address right away
-	// while also preventing a panic in `ConnectAddress()` if the control connection fails to initialize
-	cluster.AddressTranslator = gocql.AddressTranslatorFunc(func(addr net.IP, port int) (net.IP, int) {
-		return net.IPv4zero, port
-	})
-
+func NewCluster(hostDialer gocql.HostDialer, username, password string) *gocql.ClusterConfig {
+	// Do an initial resolution of Astra metadata and use the results to setup an
+	// initial contact point for the cluster
+	dialer := hostDialer.(*dialer)
+	ctx := context.Background()
+	sniProxyAddr, _, err := dialer.resolveMetadata(ctx)
+	if err != nil {
+		log.Fatal("Error resolving metdata", err)
+	}
+	cluster := gocql.NewCluster(sniProxyAddr)
+	cluster.HostDialer = hostDialer
 	cluster.PoolConfig = gocql.PoolConfig{HostSelectionPolicy: gocql.RoundRobinHostPolicy()}
 	cluster.Authenticator = &gocql.PasswordAuthenticator{
 		Username:              username,
