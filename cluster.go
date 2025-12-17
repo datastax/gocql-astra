@@ -15,16 +15,10 @@
 package gocqlastra
 
 import (
-	"context"
-	"log"
 	"time"
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 )
-
-const apacheAuthenticator = "org.apache.cassandra.auth.PasswordAuthenticator"
-const dseAuthenticator = "com.datastax.bdp.cassandra.auth.DseAuthenticator"
-const astraAuthenticator = "org.apache.cassandra.auth.AstraAuthenticator"
 
 func NewClusterFromBundle(path, username, password string, timeout time.Duration) (*gocql.ClusterConfig, error) {
 	dialer, err := NewDialerFromBundle(path, timeout)
@@ -43,20 +37,14 @@ func NewClusterFromURL(url, databaseID, token string, timeout time.Duration) (*g
 }
 
 func NewCluster(astraDialer *dialer, username, password string) *gocql.ClusterConfig {
-	// Do an initial resolution of Astra metadata and use the results to setup an
-	// initial contact point for the cluster
-	ctx := context.Background()
-	sniProxyAddr, _, err := astraDialer.resolveMetadata(ctx)
-	if err != nil {
-		log.Fatal("Error resolving metdata", err)
-	}
-	cluster := gocql.NewCluster(sniProxyAddr)
+	// add multiple fake contact points to make gocql call the dialer multiple times (since the dialer will cycle through the contact points
+	cluster := gocql.NewCluster("0.0.0.1", "0.0.0.2", "0.0.0.3") // Placeholder, maybe figure how to make this better
 	cluster.HostDialer = astraDialer
+
 	cluster.PoolConfig = gocql.PoolConfig{HostSelectionPolicy: gocql.RoundRobinHostPolicy()}
 	cluster.Authenticator = &gocql.PasswordAuthenticator{
-		Username:              username,
-		Password:              password,
-		AllowedAuthenticators: []string{apacheAuthenticator, dseAuthenticator, astraAuthenticator},
+		Username: username,
+		Password: password,
 	}
 	cluster.ReconnectInterval = 30 * time.Second
 	return cluster
