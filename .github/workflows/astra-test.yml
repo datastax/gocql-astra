@@ -33,7 +33,7 @@ jobs:
             --env test \
             --token ${{ secrets.ASTRA_DB_APPLICATION_TOKEN }} \
             --cloud AWS \
-            --region us-east-2 \
+            --region us-east-1 \
             --keyspace "$ASTRA_DB_KEYSPACE" \
             --if-not-exists \
             --no-input
