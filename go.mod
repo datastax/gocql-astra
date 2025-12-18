@@ -7,13 +7,13 @@ replace github.com/apache/cassandra-gocql-driver/v2 v2.0.0 => github.com/worryg0
 
 require (
 	github.com/apache/cassandra-gocql-driver/v2 v2.0.0
+	github.com/datastax/astra-client-go/v2 v2.2.54
 	github.com/datastax/cql-proxy v0.1.6
 	github.com/stretchr/testify v1.9.0
 )
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
-	github.com/datastax/astra-client-go/v2 v2.2.54 // indirect
 	github.com/datastax/go-cassandra-native-protocol v0.0.0-20220706104457-5e8aad05cf90 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deepmap/oapi-codegen v1.12.4 // indirect

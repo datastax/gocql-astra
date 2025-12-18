@@ -25,6 +25,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -43,28 +44,45 @@ type dialer struct {
 	dialer            net.Dialer
 	mu                sync.Mutex
 	timeout           time.Duration
+	logger            gocql.StructuredLogger
 }
 
-func NewDialerFromBundle(path string, timeout time.Duration) (*dialer, error) {
+func NewDialerFromBundle(path string, timeout time.Duration) (gocql.HostDialer, error) {
+	return NewDialerFromBundleWithLogger(path, timeout, nil)
+}
+
+func NewDialerFromURL(url, databaseID, token string, timeout time.Duration) (gocql.HostDialer, error) {
+	return NewDialerFromURLWithLogger(url, databaseID, token, timeout, nil)
+}
+
+func NewDialer(b *astra.Bundle, timeout time.Duration) (gocql.HostDialer, error) {
+	return NewDialerWithLogger(b, timeout, nil)
+}
+
+func NewDialerFromBundleWithLogger(path string, timeout time.Duration, logger gocql.StructuredLogger) (gocql.HostDialer, error) {
 	bundle, err := astra.LoadBundleZipFromPath(path)
 	if err != nil {
 		return nil, err
 	}
-	return NewDialer(bundle, timeout)
+	return NewDialerWithLogger(bundle, timeout, logger)
 }
 
-func NewDialerFromURL(url, databaseID, token string, timeout time.Duration) (*dialer, error) {
+func NewDialerFromURLWithLogger(url, databaseID, token string, timeout time.Duration, logger gocql.StructuredLogger) (gocql.HostDialer, error) {
 	bundle, err := astra.LoadBundleZipFromURL(url, databaseID, token, timeout)
 	if err != nil {
 		return nil, err
 	}
-	return NewDialer(bundle, timeout)
+	return NewDialerWithLogger(bundle, timeout, logger)
 }
 
-func NewDialer(b *astra.Bundle, timeout time.Duration) (*dialer, error) {
+func NewDialerWithLogger(b *astra.Bundle, timeout time.Duration, logger gocql.StructuredLogger) (gocql.HostDialer, error) {
+	if logger == nil {
+		logger = emptyLoggerSingleton
+	}
 	return &dialer{
 		bundle:  b,
 		timeout: timeout,
+		logger:  logger,
 	}, nil
 }
 
@@ -79,14 +97,24 @@ func (d *dialer) DialHost(ctx context.Context, host *gocql.HostInfo) (*gocql.Dia
 		return nil, err
 	}
 
-	conn, err := d.dialer.DialContext(ctx, "tcp", addr)
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to Astra ingress %v: %w", addr, err)
-	}
-
 	hostId := host.HostID()
 	if hostId == "" {
 		hostId = contactPoints[int(atomic.AddInt32(&d.contactPointIndex, 1))%len(d.contactPoints)]
+		d.logger.Debug("Dialing Astra contact point.",
+			gocql.NewLogFieldString("host_id", hostId),
+			gocql.NewLogFieldIP("original_gocql_contact_point", host.ConnectAddress()),
+			gocql.NewLogFieldString("sni_proxy_hostname", sniAddr),
+			gocql.NewLogFieldString("sni_proxy_addr", addr))
+	} else {
+		d.logger.Debug("Dialing Astra node.",
+			gocql.NewLogFieldString("host_id", hostId),
+			gocql.NewLogFieldString("sni_proxy_hostname", sniAddr),
+			gocql.NewLogFieldString("sni_proxy_addr", addr))
+	}
+
+	conn, err := d.dialer.DialContext(ctx, "tcp", addr)
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to Astra ingress %v: %w", addr, err)
 	}
 
 	tlsConn := tls.Client(conn, copyTLSConfig(d.bundle, hostId))
@@ -94,6 +122,11 @@ func (d *dialer) DialHost(ctx context.Context, host *gocql.HostInfo) (*gocql.Dia
 		_ = conn.Close()
 		return nil, fmt.Errorf("error connecting to Astra node %v through ingress %v: %w", hostId, addr, err)
 	}
+
+	d.logger.Debug("Successfully dialed Astra node or contact point.",
+		gocql.NewLogFieldString("host_id", hostId),
+		gocql.NewLogFieldString("sni_proxy_hostname", sniAddr),
+		gocql.NewLogFieldString("sni_proxy_addr", addr))
 
 	return &gocql.DialedHost{
 		Conn:            tlsConn,
@@ -129,18 +162,36 @@ func (d *dialer) resolveMetadata(ctx context.Context) (string, []string, error) 
 
 	response, err := httpsClient.Do(req)
 	if err != nil {
+		d.logger.Debug("Unable to retrieve Astra metadata.",
+			gocql.NewLogFieldString("url", url),
+			gocql.NewLogFieldError("error", err))
 		return "", nil, fmt.Errorf("unable to get Astra metadata from %s: %w", url, err)
 	}
 
 	body, err := readAllWithTimeout(response.Body, ctx)
 	if err != nil {
+		d.logger.Debug("Unable to retrieve Astra metadata response body.",
+			gocql.NewLogFieldInt("status_code", response.StatusCode),
+			gocql.NewLogFieldString("url", url),
+			gocql.NewLogFieldError("error", err))
 		return "", nil, fmt.Errorf("unable to read Astra metadata response body from %s: %w, http code: %v", url, err, response.StatusCode)
 	}
 
 	err = json.Unmarshal(body, &metadata)
 	if err != nil {
+		d.logger.Debug("Unable to decode Astra metadata response body.",
+			gocql.NewLogFieldInt("status_code", response.StatusCode),
+			gocql.NewLogFieldString("response_body", string(body)),
+			gocql.NewLogFieldString("url", url),
+			gocql.NewLogFieldError("error", err))
 		return "", nil, fmt.Errorf("unable to decode Astra metadata response body from %s: %w, received body: %v, http code: %v", url, err, string(body), response.StatusCode)
 	}
+
+	d.logger.Debug("Successfully retrieved and decoded Astra metadata.",
+		gocql.NewLogFieldInt("status_code", response.StatusCode),
+		gocql.NewLogFieldString("response_body", string(body)),
+		gocql.NewLogFieldString("url", url),
+		gocql.NewLogFieldError("error", err))
 
 	if metadata.ContactInfo.SniProxyAddress == "" || len(metadata.ContactInfo.ContactPoints) == 0 {
 		return "", nil, fmt.Errorf("unable to decode Astra metadata response body from %s: %w, received body: %v, http code: %v", url, err, string(body), response.StatusCode)
@@ -148,6 +199,10 @@ func (d *dialer) resolveMetadata(ctx context.Context) (string, []string, error) 
 
 	d.sniProxyAddr = metadata.ContactInfo.SniProxyAddress
 	d.contactPoints = metadata.ContactInfo.ContactPoints
+
+	d.logger.Debug("Successfully resolved Astra metadata.",
+		gocql.NewLogFieldString("sni_proxy_addr", d.sniProxyAddr),
+		gocql.NewLogFieldString("contact_points", strings.Join(d.contactPoints, ",")))
 
 	return d.sniProxyAddr, d.contactPoints, nil
 }
@@ -227,3 +282,15 @@ type astraMetadata struct {
 	Region      string      `json:"region"`
 	ContactInfo contactInfo `json:"contact_info"`
 }
+
+var emptyLoggerSingleton = &emptyLogger{}
+
+type emptyLogger struct{}
+
+func (e *emptyLogger) Error(msg string, fields ...gocql.LogField) {}
+
+func (e *emptyLogger) Warning(msg string, fields ...gocql.LogField) {}
+
+func (e *emptyLogger) Info(msg string, fields ...gocql.LogField) {}
+
+func (e *emptyLogger) Debug(msg string, fields ...gocql.LogField) {}
