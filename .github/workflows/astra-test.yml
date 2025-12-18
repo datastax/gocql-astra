@@ -3,6 +3,9 @@ name: Astra DB Integration Tests
 on:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
