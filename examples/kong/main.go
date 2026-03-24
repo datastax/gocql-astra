@@ -21,8 +21,8 @@ import (
 	"time"
 
 	"github.com/alecthomas/kong"
-	gocqlastra "github.com/datastax/gocql-astra"
-	"github.com/gocql/gocql"
+	gocql "github.com/apache/cassandra-gocql-driver/v2"
+	gocqlastra "github.com/datastax/gocql-astra/v2"
 )
 
 type runConfig struct {

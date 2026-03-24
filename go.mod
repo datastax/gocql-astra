@@ -1,8 +1,8 @@
-module github.com/datastax/gocql-astra
+module github.com/datastax/gocql-astra/v2
 
 go 1.19
 
-// TODO: remove this when https://github.com/apache/cassandra-gocql-driver/pull/1920 is merged
+// TODO: remove this replace and bump to v2.0.1 when gocql 2.0.1 is released
 replace github.com/apache/cassandra-gocql-driver/v2 v2.0.0 => github.com/apache/cassandra-gocql-driver/v2 v2.0.1-0.20260320161859-b86c662e14e2
 
 require (
