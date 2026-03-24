@@ -11,9 +11,9 @@ jobs:
   call-workflow-passing-data:
     uses: ./.github/workflows/astra-ci.yml
     with:
-      cloud: AWS
+      cloud: GCP
       api-url: https://api.astra.datastax.com
-      region: us-east-2
+      region: us-east1
       env: prod
     secrets:
       token: ${{ secrets.ASTRA_DB_APPLICATION_TOKEN_PROD }}

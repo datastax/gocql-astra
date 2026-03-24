@@ -55,6 +55,7 @@ jobs:
           echo "$HOME/.astra/cli" >> $GITHUB_PATH
 
       - name: Create Astra DB
+        if: always() # always allow "create" to finish even if the other one already failed (so the delete works afterwards)
         run: |
           astra db create "${{ matrix.db.name }}" \
             --env ${{ inputs.env }} \
