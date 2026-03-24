@@ -1,10 +1,27 @@
 name: Astra DB Integration Tests
 
 on:
-  workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}
+  workflow_call:
+    inputs:
+      region:
+        required: true
+        type: string
+      cloud:
+        required: true
+        type: string
+      env:
+        required: true
+        type: string
+      api-url:
+        required: true
+        type: string
+    secrets:
+      token:
+        required: true
+      client-id:
+        required: true
+      client-secret:
+        required: true
 
 jobs:
   test:

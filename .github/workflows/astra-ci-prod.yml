@@ -1,0 +1,21 @@
+name: Astra DB Integration Tests (Prod environment)
+
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+
+jobs:
+  call-workflow-passing-data:
+    uses: ./.github/workflows/astra-ci.yml
+    with:
+      cloud: AWS
+      api-url: https://api.astra.datastax.com
+      region: us-east-2
+      env: prod
+    secrets:
+      token: ${{ secrets.ASTRA_DB_APPLICATION_TOKEN_PROD }}
+      client-id: ${{ secrets.ASTRA_DB_CLIENT_ID_PROD }}
+      client-secret: ${{ secrets.ASTRA_DB_CLIENT_SECRET_PROD }}
