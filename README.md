@@ -8,7 +8,7 @@ This library relies on the following features of gocql:
 * The ability to customize connection features via the [HostDialer interface](https://github.com/gocql/gocql/pull/1629)
 * [Querying system.peers](https://github.com/gocql/gocql/pull/1646) if system.peers_v2 should be used but isn't available
 
-You must use a version of gocql which supports both of these features. Use version >= 2.0.1 of the Apache Cassandra GoCQL Driver (`github.com/apache/cassandra-gocql-driver/v2`).
+You must use a version of gocql which supports both of these features. Use version >= 2.1.1 of the Apache Cassandra GoCQL Driver (`github.com/apache/cassandra-gocql-driver/v2`).
 
 ## Migration from v1 to v2
 

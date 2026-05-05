@@ -4,12 +4,9 @@ go 1.19
 
 replace github.com/datastax/gocql-astra/v2 => ../..
 
-// TODO: remove this replace and bump to v2.0.1 when gocql 2.0.1 is released
-replace github.com/apache/cassandra-gocql-driver/v2 v2.0.0 => github.com/apache/cassandra-gocql-driver/v2 v2.0.1-0.20260320161859-b86c662e14e2
-
 require (
 	github.com/alecthomas/kong v0.6.1
-	github.com/apache/cassandra-gocql-driver/v2 v2.0.0
+	github.com/apache/cassandra-gocql-driver/v2 v2.1.1
 	github.com/datastax/gocql-astra/v2 v2.0.0
 )
 
