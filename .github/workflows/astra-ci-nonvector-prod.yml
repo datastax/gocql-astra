@@ -1,4 +1,4 @@
-name: Astra DB Integration Tests (Prod environment)
+name: Astra DB Integration Tests (NonVector - Prod environment)
 
 on:
   push:
@@ -8,13 +8,15 @@ concurrency:
   group: ${{ github.workflow }}
 
 jobs:
-  call-workflow-passing-data:
+  run-nonvector-on-prod-env:
     uses: ./.github/workflows/astra-ci.yml
     with:
       cloud: GCP
       api-url: https://api.astra.datastax.com
       region: us-east1
       env: prod
+      db-name: gocql_astra_ci
+      non-vector: true
     secrets:
       token: ${{ secrets.ASTRA_DB_APPLICATION_TOKEN_PROD }}
       client-id: ${{ secrets.ASTRA_DB_CLIENT_ID_PROD }}

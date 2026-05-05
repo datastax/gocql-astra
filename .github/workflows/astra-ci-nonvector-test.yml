@@ -1,4 +1,4 @@
-name: Astra DB Integration Tests (Test environment)
+name: Astra DB Integration Tests (NonVector - Test environment)
 
 on:
   push:
@@ -8,13 +8,15 @@ concurrency:
   group: ${{ github.workflow }}
 
 jobs:
-  call-workflow-passing-data:
+  run-nonvector-on-test-env:
     uses: ./.github/workflows/astra-ci.yml
     with:
-      cloud: AWS
+      cloud: Azure
       api-url: https://api.test.cloud.datastax.com
-      region: us-east-1
+      region: eastus
       env: test
+      db-name: gocql_astra_ci
+      non-vector: true
     secrets:
       token: ${{ secrets.ASTRA_DB_APPLICATION_TOKEN_TEST }}
       client-id: ${{ secrets.ASTRA_DB_CLIENT_ID_TEST }}

@@ -15,6 +15,12 @@ on:
       api-url:
         required: true
         type: string
+      db-name:
+        required: true
+        type: string
+      non-vector:
+        required: true
+        type: string
     secrets:
       token:
         required: true
@@ -27,14 +33,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-
-    strategy:
-      matrix:
-        db:
-          - name: gocql_astra_ci
-            non_vector: true
-          - name: gocql_vector_ci
-            non_vector: false
             
     env:
       ASTRA_DB_KEYSPACE: test_keyspace
@@ -57,18 +55,18 @@ jobs:
       - name: Create Astra DB
         if: always() # always allow "create" to finish even if the other one already failed (so the delete works afterwards)
         run: |
-          astra db create "${{ matrix.db.name }}" \
+          astra db create "${{ inputs.db-name }}" \
             --env ${{ inputs.env }} \
             --token ${{ secrets.token }} \
             --cloud ${{ inputs.cloud }} \
             --region ${{ inputs.region }} \
             --keyspace "$ASTRA_DB_KEYSPACE" \
             --if-not-exists \
-            --no-input $( [ "${{ matrix.db.non_vector }}" = "true" ] && echo "--non-vector" )
+            --no-input $( [ "${{ inputs.non-vector }}" = "true" ] && echo "--non-vector" )
 
       - name: Download Secure Connect Bundle
         run: |
-          astra db download-scb "${{ matrix.db.name }}" \
+          astra db download-scb "${{ inputs.db-name }}" \
             --env ${{ inputs.env }} \
             --token ${{ secrets.token }} \
             -f secure-connect.zip \
@@ -88,14 +86,14 @@ jobs:
             -bundle="${ASTRA_SECURE_BUNDLE_PATH}" \
             -username="${{ secrets.client-id }}" \
             -password="${{ secrets.client-secret }}" \
-            -db_name="${{ matrix.db.name }}" \
+            -db_name="${{ inputs.db-name }}" \
             -api_url="${{ inputs.api-url }}"
 
       - name: Delete Astra DB (always, fail on error)
         if: always()
         run: |
           echo "Deleting Astra DB: $ASTRA_DB_NAME"
-          astra db delete "${{ matrix.db.name }}" --yes \
+          astra db delete "${{ inputs.db-name }}" --yes \
             --env ${{ inputs.env }} \
             --token ${{ secrets.token }} \
             --no-input
