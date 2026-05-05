@@ -1,5 +1,19 @@
 # gocql for Astra
 
+## ⚠️ Version Notice
+
+This is version 1.x of gocql-astra. **If you are looking to use gocql 2.x, please use the v2 module:**
+
+```bash
+go get github.com/datastax/gocql-astra/v2
+```
+
+**Documentation:** https://pkg.go.dev/github.com/datastax/gocql-astra/v2
+
+The v2 README documentation contains an upgrade guide to help you migrate from v1.x to v2.x.
+
+---
+
 This provides a custom `gocql.HostDialer` that can be used to allow gocql to connect to DataStax Astra. The goal is to
 provide native support for gocql on Astra.
 
