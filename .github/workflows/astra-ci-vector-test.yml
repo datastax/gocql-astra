@@ -1,7 +1,6 @@
 name: Astra DB Integration Tests (Vector - Test environment)
 
 on:
-  push:
   workflow_dispatch:
 
 concurrency:
