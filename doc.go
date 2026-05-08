@@ -1,15 +1,20 @@
 /*
 Package gocqlastra provides a custom gocql.HostDialer that enables gocql to connect to DataStax Astra.
 
-# Version Notice
+This is version 2.x of gocql-astra, compatible with the Apache Cassandra GoCQL Driver v2
+(github.com/apache/cassandra-gocql-driver/v2).
 
-This is version 1.x of gocql-astra. If you are looking to use gocql 2.x, please use the v2 module:
+# Version 1.x
 
-	go get github.com/datastax/gocql-astra/v2
+If you need version 1.x (compatible with github.com/gocql/gocql 1.x), see:
+https://pkg.go.dev/github.com/datastax/gocql-astra
 
-Documentation: https://pkg.go.dev/github.com/datastax/gocql-astra/v2
+Note: GoCQL 1.x (github.com/gocql/gocql) is no longer maintained. We recommend migrating to version 2.x.
 
-The v2 documentation contains an upgrade guide to help you migrate from v1.x to v2.x.
+# Migration Guide
+
+For detailed instructions on migrating from v1.x to v2.x, including import changes and
+API updates, please see the "Migration from v1 to v2" section in the README above.
 
 # Getting Started
 

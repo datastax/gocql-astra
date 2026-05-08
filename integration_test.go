@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/apache/cassandra-gocql-driver/v2"
 	astrasdk "github.com/datastax/astra-client-go/v2/astra"
 	"github.com/datastax/cql-proxy/astra"
-	"github.com/gocql/gocql"
 	"github.com/stretchr/testify/require"
 )
 
@@ -90,8 +90,12 @@ func getDbId() (string, error) {
 }
 
 func coreTest(t *testing.T, c *gocql.ClusterConfig) {
+	if c.Logger == nil {
+		c.Logger = gocql.NewLogger(gocql.LogLevelDebug)
+	}
 	session, err := c.CreateSession()
 	require.Nil(t, err)
+	defer session.Close()
 	result, err := session.Query("SELECT * FROM system.local").Iter().SliceMap()
 	require.Nil(t, err)
 	fmt.Println(result)
@@ -100,9 +104,31 @@ func coreTest(t *testing.T, c *gocql.ClusterConfig) {
 	fmt.Println(result)
 }
 
-func TestNewCluster(t *testing.T) {
+func TestNewDialer(t *testing.T) {
 	bundle, err := astra.LoadBundleZipFromPath(*flagBundle)
 	d, err := NewDialer(bundle, 30*time.Second)
+	require.Nil(t, err)
+	c := NewCluster(d, *flagUsername, *flagPassword)
+	coreTest(t, c)
+}
+
+func TestNewDialerWithLogger(t *testing.T) {
+	bundle, err := astra.LoadBundleZipFromPath(*flagBundle)
+	d, err := NewDialerWithLogger(bundle, 30*time.Second, gocql.NewLogger(gocql.LogLevelDebug))
+	require.Nil(t, err)
+	c := NewCluster(d, *flagUsername, *flagPassword)
+	coreTest(t, c)
+}
+
+func TestNewDialerFromBundle(t *testing.T) {
+	d, err := NewDialerFromBundle(*flagBundle, 30*time.Second)
+	require.Nil(t, err)
+	c := NewCluster(d, *flagUsername, *flagPassword)
+	coreTest(t, c)
+}
+
+func TestNewDialerFromURL(t *testing.T) {
+	d, err := NewDialerFromURL(*flagApiUrl, dbId, *flagToken, 30*time.Second)
 	require.Nil(t, err)
 	c := NewCluster(d, *flagUsername, *flagPassword)
 	coreTest(t, c)
@@ -114,8 +140,20 @@ func TestNewClusterFromBundle(t *testing.T) {
 	coreTest(t, c)
 }
 
+func TestNewClusterFromBundleWithLogger(t *testing.T) {
+	c, err := NewClusterFromBundleWithLogger(*flagBundle, *flagUsername, *flagPassword, 30*time.Second, gocql.NewLogger(gocql.LogLevelDebug))
+	require.Nil(t, err)
+	coreTest(t, c)
+}
+
 func TestNewClusterFromURL(t *testing.T) {
 	c, err := NewClusterFromURL(*flagApiUrl, dbId, *flagToken, 30*time.Second)
+	require.Nil(t, err)
+	coreTest(t, c)
+}
+
+func TestNewClusterFromURLWithLogger(t *testing.T) {
+	c, err := NewClusterFromURLWithLogger(*flagApiUrl, dbId, *flagToken, 30*time.Second, gocql.NewLogger(gocql.LogLevelDebug))
 	require.Nil(t, err)
 	coreTest(t, c)
 }

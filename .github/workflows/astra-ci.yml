@@ -1,0 +1,99 @@
+name: Astra DB Integration Tests
+
+on:
+  workflow_call:
+    inputs:
+      region:
+        required: true
+        type: string
+      cloud:
+        required: true
+        type: string
+      env:
+        required: true
+        type: string
+      api-url:
+        required: true
+        type: string
+      db-name:
+        required: true
+        type: string
+      non-vector:
+        required: true
+        type: string
+    secrets:
+      token:
+        required: true
+      client-id:
+        required: true
+      client-secret:
+        required: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+            
+    env:
+      ASTRA_DB_KEYSPACE: test_keyspace
+      ASTRA_DB_NAME: gocql_astra_ci
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install Astra CLI
+        run: |
+          curl -sSL https://ibm.biz/astra-cli | sh
+          echo "$HOME/.astra/cli" >> $GITHUB_PATH
+
+      - name: Create Astra DB
+        if: always() # always allow "create" to finish even if the other one already failed (so the delete works afterwards)
+        run: |
+          astra db create "${{ inputs.db-name }}" \
+            --env ${{ inputs.env }} \
+            --token ${{ secrets.token }} \
+            --cloud ${{ inputs.cloud }} \
+            --region ${{ inputs.region }} \
+            --keyspace "$ASTRA_DB_KEYSPACE" \
+            --if-not-exists \
+            --no-input $( [ "${{ inputs.non-vector }}" = "true" ] && echo "--non-vector" )
+
+      - name: Download Secure Connect Bundle
+        run: |
+          astra db download-scb "${{ inputs.db-name }}" \
+            --env ${{ inputs.env }} \
+            --token ${{ secrets.token }} \
+            -f secure-connect.zip \
+            --no-input
+
+          echo "ASTRA_SECURE_BUNDLE_PATH=$PWD/secure-connect.zip" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run tests
+        env:
+          ASTRA_SECURE_BUNDLE_PATH: ${{ env.ASTRA_SECURE_BUNDLE_PATH }}
+        run: |
+          go test ./... -v \
+            -token="${{ secrets.token }}" \
+            -bundle="${ASTRA_SECURE_BUNDLE_PATH}" \
+            -username="${{ secrets.client-id }}" \
+            -password="${{ secrets.client-secret }}" \
+            -db_name="${{ inputs.db-name }}" \
+            -api_url="${{ inputs.api-url }}"
+
+      - name: Delete Astra DB (always, fail on error)
+        if: always()
+        run: |
+          echo "Deleting Astra DB: $ASTRA_DB_NAME"
+          astra db delete "${{ inputs.db-name }}" --yes \
+            --env ${{ inputs.env }} \
+            --token ${{ secrets.token }} \
+            --no-input

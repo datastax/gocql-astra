@@ -1,0 +1,22 @@
+name: Astra DB Integration Tests (Vector - Test environment)
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+
+jobs:
+  run-vector-on-test-env:
+    uses: ./.github/workflows/astra-ci.yml
+    with:
+      cloud: AWS
+      api-url: https://api.test.cloud.datastax.com
+      region: us-east-1
+      env: test
+      db-name: gocql_vector_ci
+      non-vector: false
+    secrets:
+      token: ${{ secrets.ASTRA_DB_APPLICATION_TOKEN_TEST }}
+      client-id: ${{ secrets.ASTRA_DB_CLIENT_ID_TEST }}
+      client-secret: ${{ secrets.ASTRA_DB_CLIENT_SECRET_TEST }}

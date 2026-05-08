@@ -15,50 +15,52 @@
 package gocqlastra
 
 import (
-	"net"
 	"time"
 
-	"github.com/gocql/gocql"
+	gocql "github.com/apache/cassandra-gocql-driver/v2"
 )
 
-
-const apacheAuthenticator = "org.apache.cassandra.auth.PasswordAuthenticator"
-const dseAuthenticator = "com.datastax.bdp.cassandra.auth.DseAuthenticator"
-const astraAuthenticator = "org.apache.cassandra.auth.AstraAuthenticator"
-
 func NewClusterFromBundle(path, username, password string, timeout time.Duration) (*gocql.ClusterConfig, error) {
-	dialer, err := NewDialerFromBundle(path, timeout)
-	if err != nil {
-		return nil, err
-	}
-	return NewCluster(dialer, username, password), nil
+	return NewClusterFromBundleWithLogger(path, username, password, timeout, nil)
 }
 
 func NewClusterFromURL(url, databaseID, token string, timeout time.Duration) (*gocql.ClusterConfig, error) {
-	dialer, err := NewDialerFromURL(url, databaseID, token, timeout)
-	if err != nil {
-		return nil, err
-	}
-	return NewCluster(dialer, "token", token), nil
+	return NewClusterFromURLWithLogger(url, databaseID, token, timeout, nil)
 }
 
 func NewCluster(dialer gocql.HostDialer, username, password string) *gocql.ClusterConfig {
+	return NewClusterWithLogger(dialer, username, password, nil)
+}
+
+func NewClusterFromBundleWithLogger(path, username, password string, timeout time.Duration, logger gocql.StructuredLogger) (*gocql.ClusterConfig, error) {
+	dialer, err := NewDialerFromBundleWithLogger(path, timeout, logger)
+	if err != nil {
+		return nil, err
+	}
+	return NewClusterWithLogger(dialer, username, password, logger), nil
+}
+
+func NewClusterFromURLWithLogger(url, databaseID, token string, timeout time.Duration, logger gocql.StructuredLogger) (*gocql.ClusterConfig, error) {
+	dialer, err := NewDialerFromURLWithLogger(url, databaseID, token, timeout, logger)
+	if err != nil {
+		return nil, err
+	}
+	return NewClusterWithLogger(dialer, "token", token, logger), nil
+}
+
+func NewClusterWithLogger(dialer gocql.HostDialer, username, password string, logger gocql.StructuredLogger) *gocql.ClusterConfig {
 	// add multiple fake contact points to make gocql call the dialer multiple times (since the dialer will cycle through the contact points
 	cluster := gocql.NewCluster("0.0.0.1", "0.0.0.2", "0.0.0.3") // Placeholder, maybe figure how to make this better
 	cluster.HostDialer = dialer
-
-	// this will make gocql ignore the contact point address for the control host initially and use the system.local address right away
-	// while also preventing a panic in `ConnectAddress()` if the control connection fails to initialize
-	cluster.AddressTranslator = gocql.AddressTranslatorFunc(func(addr net.IP, port int) (net.IP, int) {
-		return net.IPv4zero, port
-	})
 
 	cluster.PoolConfig = gocql.PoolConfig{HostSelectionPolicy: gocql.RoundRobinHostPolicy()}
 	cluster.Authenticator = &gocql.PasswordAuthenticator{
 		Username: username,
 		Password: password,
-		AllowedAuthenticators: []string{apacheAuthenticator, dseAuthenticator, astraAuthenticator},
 	}
 	cluster.ReconnectInterval = 30 * time.Second
+	if logger != nil {
+		cluster.Logger = logger
+	}
 	return cluster
 }

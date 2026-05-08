@@ -1,16 +1,9 @@
-# gocql for Astra
+# gocql for Astra (v2)
 
-## ⚠️ Version Notice
+This is version 2.x of gocql-astra, compatible with the Apache Cassandra GoCQL Driver v2.
 
-This is version 1.x of gocql-astra. **If you are looking to use gocql 2.x, please use the v2 module:**
-
-```bash
-go get github.com/datastax/gocql-astra/v2
-```
-
-**Documentation:** https://pkg.go.dev/github.com/datastax/gocql-astra/v2
-
-The v2 README documentation contains an upgrade guide to help you migrate from v1.x to v2.x.
+**📌 Looking for version 1.x?** See [Version 1.x](#version-1x)<br>
+**🔄 Upgrading from v1?** See [Migration Guide](#migration-from-v1-to-v2)
 
 ---
 
@@ -20,24 +13,28 @@ provide native support for gocql on Astra.
 This library relies on the following features of gocql:
 
 * The ability to customize connection features via the [HostDialer interface](https://github.com/gocql/gocql/pull/1629)
-* [Querying system.peers](https://github.com/gocql/gocql/pull/1646) if system.peers_v2 should be used but isn't available 
+* [Querying system.peers](https://github.com/gocql/gocql/pull/1646) if system.peers_v2 should be used but isn't available
 
-You must use a version of gocql which supports both of these features.  Both features have been merged into master as of
-version [1.2.1](https://github.com/gocql/gocql/releases/tag/v1.2.1) so any release >= 1.2.1 should work.
+You must use a version of gocql which supports both of these features. Use version >= 2.1.1 of the Apache Cassandra GoCQL Driver (`github.com/apache/cassandra-gocql-driver/v2`).
+
 
 ## Issues
 
-* Need to verify that topology/status events correctly update the driver when using Astra.
-  * This seems to work correctly and was tested by removing Astra coordinators
-* There is a bit of weirdness around contact points. I'm just using a place holder `"0.0.0.0"` (some valid IP address) 
-  then the `HostDialer` provides a host ID from the metadata service when the host ID in the `HostInfo` is empty.
+* There is a bit of weirdness around contact points. The driver is using a few place holders `"0.0.0.1,0.0.0.2,0.0.0.3"` (some valid IP address) 
+  then the `HostDialer` provides a host ID from the metadata service when the host ID in the `HostInfo` is empty. 
+  Using multiple placeholder contact points instead of a single one enables the driver to retry if the initial connection fails.
 
 ## How to use it:
 
 Using an Astra bundle:
 
 ```go
-cluster, err := gocqlastra.NewClusterFromBundle("/path/to/your/bundle.zip", 
+import (
+	gocqlastra "github.com/datastax/gocql-astra/v2"
+	gocql "github.com/apache/cassandra-gocql-driver/v2"
+)
+
+cluster, err := gocqlastra.NewClusterFromBundle("/path/to/your/bundle.zip",
 	"<username>", "<password>", 10 * time.Second)
 
 if err != nil {
@@ -52,11 +49,16 @@ session, err := gocql.NewSession(*cluster)
 Using an Astra token:
 
 ```go
-cluster, err = gocqlastra.NewClusterFromURL(gocqlastra.AstraAPIURL, 
+import (
+	gocqlastra "github.com/datastax/gocql-astra/v2"
+	gocql "github.com/apache/cassandra-gocql-driver/v2"
+)
+
+cluster, err = gocqlastra.NewClusterFromURL(gocqlastra.AstraAPIURL,
 	"<astra-database-id>", "<astra-token>", 10 * time.Second)
 
 if err != nil {
-panic("unable to load the bundle")
+    panic("unable to load the bundle")
 }
 
 session, err := gocql.NewSession(*cluster)
@@ -79,3 +81,60 @@ go build
 ./example --astra-token <astra-token> --astra-database-id <astra-database-id> \
   [--astra-api-url <astra-api-url>]
 ```
+
+---
+
+## Version 1.x
+
+**If you need version 1.x** (compatible with `github.com/gocql/gocql` 1.x), see: https://pkg.go.dev/github.com/datastax/gocql-astra
+
+> **Note:** GoCQL 1.x (`github.com/gocql/gocql`) is no longer maintained. We recommend migrating to version 2.x.
+
+## Migration from v1 to v2
+
+Version 2.0.0 of gocql-astra introduces breaking changes due to the migration of the underlying gocql driver to the Apache Software Foundation. The gocql project was donated to the ASF and, as part of version 2, changed its module path from `github.com/gocql/gocql` to `github.com/apache/cassandra-gocql-driver/v2`.
+
+If you're upgrading from v1, follow these steps:
+
+### 1. Update your go.mod
+
+Change your module dependency from:
+```go
+require github.com/datastax/gocql-astra v1.x.x
+```
+
+To:
+```go
+require github.com/datastax/gocql-astra/v2 v2.0.0
+```
+
+### 2. Update your imports
+
+Change your import statements from:
+```go
+import (
+    gocqlastra "github.com/datastax/gocql-astra"
+    "github.com/gocql/gocql"
+)
+```
+
+To:
+```go
+import (
+    gocqlastra "github.com/datastax/gocql-astra/v2"
+    gocql "github.com/apache/cassandra-gocql-driver/v2"
+)
+```
+
+### 3. Update your dependencies
+
+Run the following commands to update your dependencies:
+```bash
+go get github.com/datastax/gocql-astra/v2@latest
+go get github.com/apache/cassandra-gocql-driver/v2@latest
+go mod tidy
+```
+
+### 4. Review API changes
+
+The core API of gocql-astra remains the same, but you should review any code that directly uses the Apache Cassandra GoCQL Driver API, as it has undergone changes in v2. Refer to the [Apache Cassandra GoCQL Driver Upgrade Guide](https://github.com/apache/cassandra-gocql-driver/blob/trunk/UPGRADE_GUIDE.md) for details on driver-specific changes.
