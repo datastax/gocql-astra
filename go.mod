@@ -3,7 +3,7 @@ module github.com/datastax/gocql-astra/v2
 go 1.19
 
 require (
-	github.com/apache/cassandra-gocql-driver/v2 v2.1.1
+	github.com/apache/cassandra-gocql-driver/v2 v2.1.2
 	github.com/datastax/astra-client-go/v2 v2.2.54
 	github.com/datastax/cql-proxy v0.1.6
 	github.com/stretchr/testify v1.9.0
