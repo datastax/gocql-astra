@@ -6,7 +6,7 @@ replace github.com/datastax/gocql-astra/v2 => ../..
 
 require (
 	github.com/alecthomas/kong v0.6.1
-	github.com/apache/cassandra-gocql-driver/v2 v2.1.1
+	github.com/apache/cassandra-gocql-driver/v2 v2.1.2
 	github.com/datastax/gocql-astra/v2 v2.0.0
 )
 
