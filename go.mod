@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/apache/cassandra-gocql-driver/v2 v2.1.2
 	github.com/datastax/astra-client-go/v2 v2.2.54
-	github.com/datastax/cql-proxy v0.1.6
+	github.com/datastax/cql-proxy v0.2.1
 	github.com/stretchr/testify v1.9.0
 )
 
@@ -14,7 +14,9 @@ require (
 	github.com/datastax/go-cassandra-native-protocol v0.0.0-20220706104457-5e8aad05cf90 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deepmap/oapi-codegen v1.12.4 // indirect
+	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/uuid v1.3.0 // indirect
+	github.com/pierrec/lz4/v4 v4.1.8 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
